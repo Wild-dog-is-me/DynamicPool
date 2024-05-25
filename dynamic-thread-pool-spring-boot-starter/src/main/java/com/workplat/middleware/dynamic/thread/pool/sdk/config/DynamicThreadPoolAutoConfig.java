@@ -1,11 +1,25 @@
 package com.workplat.middleware.dynamic.thread.pool.sdk.config;
 
 import com.alibaba.fastjson.JSON;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.DynamicThreadPoolService;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.IDynamicThreadPoolService;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.ThreadPoolConfigEntity;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.valobj.RegistryEnumVO;
+import com.workplat.middleware.dynamic.thread.pool.sdk.registry.IRegistry;
+import com.workplat.middleware.dynamic.thread.pool.sdk.registry.redis.RedisRegistry;
+import com.workplat.middleware.dynamic.thread.pool.sdk.trigger.ThreadPoolDataReportJob;
 import org.apache.commons.lang.StringUtils;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.codec.JsonJacksonCodec;
+import org.redisson.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import sun.nio.ch.ThreadPool;
 
 import java.util.Map;
@@ -19,15 +33,48 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @Description:
  */
 
-
+@Configuration
+@EnableScheduling
+@EnableConfigurationProperties(DynamicThreadPoolAutoProperties.class)
 public class DynamicThreadPoolAutoConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamicThreadPoolAutoConfig.class);
 
     private String applicationName;
 
+    @Bean("redissonClient")
+    public RedissonClient redissonClient(DynamicThreadPoolAutoProperties properties) {
+        Config config = new Config();
+        config.setCodec(JsonJacksonCodec.INSTANCE);
+
+        config.useSingleServer()
+                .setAddress("redis://" + properties.getHost() + ":" + properties.getPort())
+                .setPassword(properties.getPassword())
+                .setConnectionPoolSize(properties.getPoolSize())
+                .setConnectionMinimumIdleSize(properties.getMinIdleSize())
+                .setIdleConnectionTimeout(properties.getIdleTimeout())
+                .setConnectTimeout(properties.getConnectTimeout())
+                .setRetryAttempts(properties.getRetryAttempts())
+                .setRetryInterval(properties.getRetryInterval())
+                .setPingConnectionInterval(properties.getPingInterval())
+                .setKeepAlive(properties.isKeepAlive())
+        ;
+
+        RedissonClient redissonClient = Redisson.create(config);
+
+        logger.info("动态线程池，注册器（redis）链接初始化完成。{} {} {}", properties.getHost(), properties.getPoolSize(), !redissonClient.isShutdown());
+
+        return redissonClient;
+    }
+
+    @Bean
+    public IRegistry redisRegistry(RedissonClient redissonClient) {
+        return new RedisRegistry(redissonClient);
+    }
+
     @Bean("dynamicThreadPollService")
-    public String dynamicThreadPollService(ApplicationContext applicationContext, Map<String, ThreadPoolExecutor> threadPoolExecutorMap) {
+    public DynamicThreadPoolService dynamicThreadPollService(ApplicationContext applicationContext, Map<String,
+            ThreadPoolExecutor> threadPoolExecutorMap,RedissonClient redissonClient) {
         applicationName = applicationContext.getEnvironment().getProperty("spring.application.name");
 
         if (StringUtils.isBlank(applicationName)) {
@@ -37,17 +84,25 @@ public class DynamicThreadPoolAutoConfig {
 
         logger.info("应用名称为:{} - 线程池信息:{}", applicationName, JSON.toJSONString(threadPoolExecutorMap.keySet()));
 
+        // 获取缓存数据，设置本地线程池配置
         Set<String> threadPoolKeys = threadPoolExecutorMap.keySet();
         for (String threadPoolKey : threadPoolKeys) {
+            ThreadPoolConfigEntity threadPoolConfigEntity = redissonClient.<ThreadPoolConfigEntity>getBucket
+                    (RegistryEnumVO.THREAD_POOL_CONFIG_PARAMETER_LIST_KEY.getKey() + "_" + applicationName + "_" + threadPoolKey).get();
+            if (null == threadPoolConfigEntity) {
+                continue;
+            }
             ThreadPoolExecutor threadPoolExecutor = threadPoolExecutorMap.get(threadPoolKey);
-            int poolSize = threadPoolExecutor.getPoolSize();
-            int corePoolSize = threadPoolExecutor.getCorePoolSize();
-            BlockingQueue<Runnable> queue = threadPoolExecutor.getQueue();
-            String simpleName = queue.getClass().getSimpleName();
-            logger.info("当前线程池[{}],poolSize:[{}]，corePoolSize:[{}]，队列类型:[{}]", threadPoolKey, poolSize, corePoolSize, simpleName);
+            threadPoolExecutor.setCorePoolSize(threadPoolConfigEntity.getCorePoolSize());
+            threadPoolExecutor.setMaximumPoolSize(threadPoolConfigEntity.getMaximumPoolSize());
         }
 
-
-        return new String();
+        return new DynamicThreadPoolService(applicationName, threadPoolExecutorMap);
     }
+
+    @Bean
+    public ThreadPoolDataReportJob threadPoolDataReportJob(IDynamicThreadPoolService dynamicThreadPoolService, IRegistry registry) {
+        return new ThreadPoolDataReportJob(dynamicThreadPoolService, registry);
+    }
+
 }
