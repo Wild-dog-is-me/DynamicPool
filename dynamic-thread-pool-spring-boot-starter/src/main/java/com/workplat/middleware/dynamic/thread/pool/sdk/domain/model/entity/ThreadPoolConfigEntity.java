@@ -8,7 +8,6 @@ package com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity;
 
 public class ThreadPoolConfigEntity {
 
-
     /**
      * 应用名称
      */
@@ -66,16 +65,8 @@ public class ThreadPoolConfigEntity {
         return appName;
     }
 
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
-
     public String getThreadPoolName() {
         return threadPoolName;
-    }
-
-    public void setThreadPoolName(String threadPoolName) {
-        this.threadPoolName = threadPoolName;
     }
 
     public int getCorePoolSize() {
@@ -133,4 +124,5 @@ public class ThreadPoolConfigEntity {
     public void setRemainingCapacity(int remainingCapacity) {
         this.remainingCapacity = remainingCapacity;
     }
+
 }
