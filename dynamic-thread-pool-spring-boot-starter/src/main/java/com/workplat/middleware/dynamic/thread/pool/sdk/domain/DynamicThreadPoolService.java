@@ -1,7 +1,7 @@
 package com.workplat.middleware.dynamic.thread.pool.sdk.domain;
 
 import com.alibaba.fastjson.JSON;
-import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.ThreadPoolConfigEntity;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity.ThreadPoolConfigEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

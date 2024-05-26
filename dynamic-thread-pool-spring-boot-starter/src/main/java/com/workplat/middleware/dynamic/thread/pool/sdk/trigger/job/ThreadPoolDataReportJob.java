@@ -1,8 +1,8 @@
-package com.workplat.middleware.dynamic.thread.pool.sdk.trigger;
+package com.workplat.middleware.dynamic.thread.pool.sdk.trigger.job;
 
 import com.alibaba.fastjson.JSON;
 import com.workplat.middleware.dynamic.thread.pool.sdk.domain.IDynamicThreadPoolService;
-import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.ThreadPoolConfigEntity;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity.ThreadPoolConfigEntity;
 import com.workplat.middleware.dynamic.thread.pool.sdk.registry.IRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

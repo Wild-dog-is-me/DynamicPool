@@ -1,6 +1,6 @@
 package com.workplat.middleware.dynamic.thread.pool.sdk.registry.redis;
 
-import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.ThreadPoolConfigEntity;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity.ThreadPoolConfigEntity;
 import com.workplat.middleware.dynamic.thread.pool.sdk.domain.valobj.RegistryEnumVO;
 import com.workplat.middleware.dynamic.thread.pool.sdk.registry.IRegistry;
 import org.redisson.api.RBucket;

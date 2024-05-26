@@ -1,13 +1,11 @@
-package com.workplat.middleware.dynamic.thread.pool.sdk.domain.model;
+package com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity;
 
 /**
  * @Author: Odin
- * @Date: 2024/5/25 17:25
- * @Description: 线程池配置实体对象
+ * @Date: 2024/5/25 21:24
+ * @Description:
  */
-
 public class ThreadPoolConfigEntity {
-
 
     /**
      * 应用名称
@@ -66,16 +64,8 @@ public class ThreadPoolConfigEntity {
         return appName;
     }
 
-    public void setAppName(String appName) {
-        this.appName = appName;
-    }
-
     public String getThreadPoolName() {
         return threadPoolName;
-    }
-
-    public void setThreadPoolName(String threadPoolName) {
-        this.threadPoolName = threadPoolName;
     }
 
     public int getCorePoolSize() {
@@ -133,4 +123,5 @@ public class ThreadPoolConfigEntity {
     public void setRemainingCapacity(int remainingCapacity) {
         this.remainingCapacity = remainingCapacity;
     }
+
 }

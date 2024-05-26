@@ -3,13 +3,15 @@ package com.workplat.middleware.dynamic.thread.pool.sdk.config;
 import com.alibaba.fastjson.JSON;
 import com.workplat.middleware.dynamic.thread.pool.sdk.domain.DynamicThreadPoolService;
 import com.workplat.middleware.dynamic.thread.pool.sdk.domain.IDynamicThreadPoolService;
-import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.ThreadPoolConfigEntity;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity.ThreadPoolConfigEntity;
 import com.workplat.middleware.dynamic.thread.pool.sdk.domain.valobj.RegistryEnumVO;
 import com.workplat.middleware.dynamic.thread.pool.sdk.registry.IRegistry;
 import com.workplat.middleware.dynamic.thread.pool.sdk.registry.redis.RedisRegistry;
-import com.workplat.middleware.dynamic.thread.pool.sdk.trigger.ThreadPoolDataReportJob;
+import com.workplat.middleware.dynamic.thread.pool.sdk.trigger.job.ThreadPoolDataReportJob;
+import com.workplat.middleware.dynamic.thread.pool.sdk.trigger.listen.ThreadPoolConfigAdjustListener;
 import org.apache.commons.lang.StringUtils;
 import org.redisson.Redisson;
+import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.redisson.codec.JsonJacksonCodec;
 import org.redisson.config.Config;
@@ -20,11 +22,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import sun.nio.ch.ThreadPool;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -104,5 +104,18 @@ public class DynamicThreadPoolAutoConfig {
     public ThreadPoolDataReportJob threadPoolDataReportJob(IDynamicThreadPoolService dynamicThreadPoolService, IRegistry registry) {
         return new ThreadPoolDataReportJob(dynamicThreadPoolService, registry);
     }
+
+    @Bean
+    public ThreadPoolConfigAdjustListener threadPoolConfigAdjustListener(DynamicThreadPoolService dynamicThreadPoolService, IRegistry registry) {
+        return new ThreadPoolConfigAdjustListener(dynamicThreadPoolService, registry);
+    }
+
+    @Bean("dynamicThreadPoolRedisTopic")
+    public RTopic threadPoolConfigAdjustListener(RedissonClient redissonClient, ThreadPoolConfigAdjustListener threadPoolConfigAdjustListener) {
+        RTopic topic = redissonClient.getTopic(RegistryEnumVO.DYNAMIC_THREAD_POOL_REDIS_TOPIC.getKey() + "_" + applicationName);
+        topic.addListener(ThreadPoolConfigEntity.class, threadPoolConfigAdjustListener);
+        return topic;
+    }
+
 
 }

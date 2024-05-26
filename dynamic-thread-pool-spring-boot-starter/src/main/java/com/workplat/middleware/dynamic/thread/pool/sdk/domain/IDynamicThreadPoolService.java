@@ -1,6 +1,6 @@
 package com.workplat.middleware.dynamic.thread.pool.sdk.domain;
 
-import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.ThreadPoolConfigEntity;
+import com.workplat.middleware.dynamic.thread.pool.sdk.domain.model.entity.ThreadPoolConfigEntity;
 
 import java.util.List;
 
